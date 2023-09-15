@@ -1,0 +1,57 @@
+name: CI/CD to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Create ZIP Archive
+      run: |
+        npm install --production
+        zip -r app.zip . -x node_modules/\*
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-artifact
+        path: app.zip
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      run: eb --version
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: ${{ secrets.AWS_REGION }}
+
+    # - name: Install AWS Elastic Beanstalk CLI
+    #   run: |
+    #     git clone https://github.com/aws/aws-elastic-beanstalk-cli-setup.git
+    #     cd aws-elastic-beanstalk-cli-setup
+    #     python3 ./scripts/ebcli_installer.py
+
+    # - name: Download Artifact
+    #   uses: actions/download-artifact@v2
+    #   with:
+    #     name: app-artifact
+    #     path: .
+
+    # - name: Deploy to Elastic Beanstalk
+    #   run: |
+    #     eb deploy ${{ secrets.EB_ENV_NAME }} --label "$(date +'%Y%m%d%H%M%S')"
